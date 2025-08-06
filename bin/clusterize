@@ -12,17 +12,6 @@ import datetime
 import subprocess
 import configparser
 
-# check the version of colored and import the appropriate class
-import warnings
-warnings.simplefilter("ignore", category=DeprecationWarning)
-import pkg_resources
-
-version = pkg_resources.get_distribution("colored").version
-if version < "2.0.0":
-    from colored import style as Style, fore as Fore
-else:
-    from colored import Style, Fore
-
 history_file = os.path.join(os.path.expanduser('~'), '.clusterize_history')
 if not os.path.exists(history_file):
     open(history_file, 'a').close()
@@ -66,6 +55,12 @@ out_of_box_defaults = {
     'dont_add_random_string_to_job_name_and_outputs': 0,
 }
 
+class colored:
+    RED='\033[31m'
+    GREEN='\033[32m'
+    YELLOW='\033[33m'
+    RESET='\033[0m'
+
 
 class Clusterize(object):
     def __init__(self, args):
@@ -78,7 +73,7 @@ class Clusterize(object):
             if self.config_file_path == default_config_path:
                 get_default_config(self.config_file_path)
             else:
-                print(Fore.RED + '{} does not exist. Try setting a new config file'.format(self.config_file_path))
+                print(colored.RED + '{} does not exist. Try setting a new config file'.format(self.config_file_path))
                 sys.exit()
 
         self.user_defaults = {}
@@ -102,7 +97,7 @@ class Clusterize(object):
         }
 
         if '/' in self.params['job_name']:
-            print(Fore.RED + 'Why does your job name have slashes? It\'s a name for the job, not a path' + Style.RESET)
+            print(colored.RED + 'Why does your job name have slashes? It\'s a name for the job, not a path' + colored.RESET)
             sys.exit()
 
         self.parse_output_parameter()
@@ -119,7 +114,7 @@ class Clusterize(object):
         else:
             num_inputs = len(user_provided_output.split(','))
             if num_inputs > 2:
-                print(Fore.RED + 'clusterize was expecting either 1 or 2 items for (-o, --output) but got {}'.format(num_inputs) + Style.RESET)
+                print(colored.RED + 'clusterize was expecting either 1 or 2 items for (-o, --output) but got {}'.format(num_inputs) + colored.RESET)
                 sys.exit()
 
             output, error = (user_provided_output, user_provided_output) if num_inputs == 1 else user_provided_output.split(',')
@@ -143,7 +138,7 @@ class Clusterize(object):
 
                 # Its directory name either doesnt exist or is a file.
                 else:
-                    print(Fore.RED + '{} isn\'t a directory so clusterize is unwilling to set {} as the {} file'.format(os.path.dirname(path), path, name) + Style.RESET)
+                    print(colored.RED + '{} isn\'t a directory so clusterize is unwilling to set {} as the {} file'.format(os.path.dirname(path), path, name) + colored.RESET)
                     sys.exit()
 
 
@@ -199,7 +194,7 @@ class Clusterize(object):
         try:
             output = subprocess.check_output(cmd, shell=True, universal_newlines=True)
         except subprocess.CalledProcessError as e:
-            print(Fore.RED + 'ClusterizeError shown above. Change parameters or edit {}'.format(self.config_file_path) + Style.RESET)
+            print(colored.RED + 'ClusterizeError shown above. Change parameters or edit {}'.format(self.config_file_path) + colored.RESET)
             os.remove(self.sbatch_filepath)
             sys.exit()
 
@@ -218,7 +213,7 @@ class Clusterize(object):
                 f.write('# command: {}\n\n'.format(self.params['command']))
 
         extra_msg = ' (log{}: {})'.format('s' if len(files) > 1 else '', ', '.join(files))
-        print(Fore.GREEN + str(output.strip()) + extra_msg + Style.RESET)
+        print(colored.GREEN + str(output.strip()) + extra_msg + colored.RESET)
 
         self.add_to_job_history()
 
@@ -299,7 +294,7 @@ class LimitUserResourceUptake(object):
             output = subprocess.check_output(cmd, shell=True, universal_newlines=True)
             return 0 if output == '' else int(output)
         except subprocess.CalledProcessError as e:
-            print(Fore.RED + 'LimitUserResourceUptake :: cmd `{}` failed'.format(cmd) + Style.RESET)
+            print(colored.RED + 'LimitUserResourceUptake :: cmd `{}` failed'.format(cmd) + colored.RESET)
             sys.exit()
 
 
@@ -323,10 +318,10 @@ class LimitUserResourceUptake(object):
             else:
                 if self.give_up_time is not None and self.time_elapsed() > self.give_up_time:
                     # give up
-                    print(Fore.RED + 'Giving up after {}s'.format(self.time_elapsed()) + Style.RESET)
+                    print(colored.RED + 'Giving up after {}s'.format(self.time_elapsed()) + colored.RESET)
                     sys.exit(1)
                 else:
-                    print(Fore.YELLOW + 'Already utilizing {} cores... trying again in {}s'.format(current_num_CPUs, self.check_every))
+                    print(colored.YELLOW + 'Already utilizing {} cores... trying again in {}s'.format(current_num_CPUs, self.check_every))
                     time.sleep(self.check_every)
                     self.increment_check_every()
 
@@ -347,14 +342,14 @@ def main(args):
 
 def get_default_config(path):
     if os.path.exists(path):
-        print(Fore.RED + '{} already exists. delete it first if you want to create a new default config'.format(path) + Style.RESET)
+        print(colored.RED + '{} already exists. delete it first if you want to create a new default config'.format(path) + colored.RESET)
         sys.exit()
 
     config = configparser.ConfigParser()
     config['CLUSTERIZE_DEFAULTS'] = {k: str(v) for k, v in out_of_box_defaults.items()}
     with open(path, 'w') as configfile:
         config.write(configfile)
-    print(Fore.GREEN + 'default config file written to {}'.format(path) + Style.RESET)
+    print(colored.GREEN + 'default config file written to {}'.format(path) + colored.RESET)
 
 
 if __name__ == '__main__':

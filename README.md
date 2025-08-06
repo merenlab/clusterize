@@ -1,4 +1,4 @@
-**If you're a meren lab member, visit here for instructions on how to use our default parameters: https://github.com/merenlab/lab-fiesta/wiki/Working-on-Midway#clusterize.**
+**If you're a meren lab member, visit here for instructions on how to use our default parameters: https://github.com/merenlab/lab-fiesta/wiki/Working-on-Rosa#Clusterize.**
 
 
 # clusterize
@@ -14,40 +14,7 @@ This must be setup in a python3 environment.
 
 ## Installation
 
-Installation will depend upon your permissions. First, try
-
-```
-git clone https://github.com/ekiefl/clusterize.git
-cd clusterize
-python setup.py install
-clusterize -h
-```
-
-Did that bring up the help menu? If not, try:
-
-```
-cd ..
-clusterize -h
-cd -
-```
-
-(For some reason it be like that) Did that bring up the help menu? If not, try:
-
-```
-python setup.py install --user
-clusterize -h
-```
-
-If that also didn't bring up the help menu, try and find the line:
-
-```
-Installing clusterize script to <SOME_PATH>
-```
-
-and try `<SOME_PATH>/clusterize -h`. if that brought the help menu, you simply need to add `<SOME_PATH>` to your `$PATH` variable.
-
-Please contact me if none of these worked, especially if you found a solution to your problem.
-
+You simply need to have `bin/clusterize` in your `$PATH` variable.
 
 ## Usage
 

@@ -58,6 +58,8 @@ Since this README was last updated, here are the options available:
                         How many nodes you want to use? default is 1
   -n NUM_TASKS_PER_NODE, --num-tasks-per-node NUM_TASKS_PER_NODE
                         How many nodes you want to use? default 1
+  -c CPUS_PER_TASK, --cpus-per-task CPUS_PER_TASK
+                        How many cores per task. Default 1
   -g NUM_GPUS, --num-gpus NUM_GPUS
                         How many GPUs you want to use?
   -t ALLOTTED_TIME, --allotted-time ALLOTTED_TIME

@@ -31,6 +31,7 @@ sbatch_param_list = ['#SBATCH --job-name={job_name}',
 '#SBATCH --partition={partition}',
 '#SBATCH --nodes={num_nodes}',
 '#SBATCH --ntasks-per-node={num_tasks_per_node}',
+'#SBATCH --cpus-per-task={cpus_per_task}',
 '#SBATCH --time={allotted_time}',
 '#SBATCH --mem-per-cpu={mem_per_cpu}',
 '#SBATCH --open-mode=append',
@@ -45,6 +46,7 @@ out_of_box_defaults = {
     'partition': None,
     'num_nodes': 1,
     'num_tasks_per_node': 1,
+    'cpus_per_task': 1,
     'num_gpus': '',
     'allotted_time': '4-0:00:00',
     'mem_per_cpu': 10000,
@@ -85,6 +87,7 @@ class Clusterize(object):
             'partition': A('partition', self.get_default),
             'num_nodes': A('num_nodes', self.get_default),
             'num_tasks_per_node': A('num_tasks_per_node', self.get_default),
+            'cpus_per_task': A('cpus_per_task', self.get_default),
             'num_gpus': ''.join(['gpu:', str(A('num_gpus', self.get_default))]) if A('num_gpus', self.get_default) != '' else None,
             'allotted_time': A('allotted_time', self.get_default),
             'mem_per_cpu': A('mem_per_cpu', self.get_default),
@@ -334,7 +337,7 @@ def main(args):
     c = Clusterize(args)
 
     total = args.max_resources
-    requested = int(c.params['num_nodes']) * int(c.params['num_tasks_per_node'])
+    requested = int(c.params['num_nodes']) * int(c.params['num_tasks_per_node'] * int(c.params['cpus_per_task']))
 
     with LimitUserResourceUptake(total, requested):
         c.submit()
@@ -392,7 +395,8 @@ if __name__ == '__main__':
                                                       help='By default a unique string is added to job name and the output\
                                                             and error logs. Use this flag to suppress this behavior.')
     groupA.add_argument('-N','--num-nodes', type=int, help='How many nodes you want to use? default is {}'.format(out_of_box_defaults['num_nodes']))
-    groupA.add_argument('-n','--num-tasks-per-node', type=int, help='How many nodes you want to use? default {}'.format(out_of_box_defaults['num_tasks_per_node']))
+    groupA.add_argument('-n','--num-tasks-per-node', type=int, help='How many task per nodes you want to use? default {}'.format(out_of_box_defaults['num_tasks_per_node']))
+    groupA.add_argument('-c','--cpus-per-task', type=int, help='How many cores per task. Default {}'.format(out_of_box_defaults['cpus_per_task']))
     groupA.add_argument('-g','--num-gpus', type=int, help='How many GPUs you want to use? default {}'.format(out_of_box_defaults['num_gpus']))
     groupA.add_argument('-R','--max-resources', type=int, default=None, help='If you don\'t want to hog the cluster by submitting tons of jobs,\
                                                                 this parameter is for you. The job will not be submitted until\

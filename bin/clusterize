@@ -100,6 +100,7 @@ class Clusterize(object):
             'dependency': A('dependency', self.get_default),
             'dont_add_random_string_to_job_name_and_outputs': bool(int(A('dont_add_random_string_to_job_name_and_outputs', self.get_default))),
             'seed': self.job_seed,
+            'parsable': args.__dict__.get('parsable', False),
         }
 
         if '/' in self.params['job_name']:
@@ -195,7 +196,7 @@ class Clusterize(object):
 
 
     def run_job(self):
-        cmd = 'sbatch {}'.format(self.sbatch_filepath)
+        cmd = 'sbatch --parsable {}'.format(self.sbatch_filepath)
 
         try:
             output = subprocess.check_output(cmd, shell=True, universal_newlines=True)
@@ -205,6 +206,14 @@ class Clusterize(object):
             sys.exit()
 
         os.remove(self.sbatch_filepath)
+
+        job_id = output.strip()  # with --parsable, sbatch returns the job ID
+
+        # if --parsable, just print the job ID and leave
+        if self.params.get('parsable'):
+            print(job_id)
+            self.add_to_job_history()
+            return
 
         files = [self.params['output'], self.params['error']] if self.params['output'] != self.params['error'] else [self.params['output']]
 
@@ -219,7 +228,7 @@ class Clusterize(object):
                 f.write('# command: {}\n\n'.format(self.params['command']))
 
         extra_msg = ' (log{}: {})'.format('s' if len(files) > 1 else '', ', '.join(files))
-        print(colored.GREEN + str(output.strip()) + extra_msg + colored.RESET)
+        print(colored.GREEN + 'Submitted batch job ' + job_id + extra_msg + colored.RESET)
 
         self.add_to_job_history()
 
@@ -418,13 +427,16 @@ if __name__ == '__main__':
     groupA.add_argument('--exclude', help='Run the job making sure NOT to use these nodes (comma separated). Default is {}. See also --nodelist'.format(out_of_box_defaults['exclude']))
     groupA.add_argument('--mail-user', help='email address to send updates to. Default is {}'.format(out_of_box_defaults['mail_user']))
     groupA.add_argument('--mail-type', help='Comma-separated from this list: (NONE, BEGIN, END, FAIL, ALL). Default is {}'.format(out_of_box_defaults['mail_type']))
-    groupA.add_argument('--dependency', help='Prevent the job from starting until certain conditions are fulfilled. Accepts an `sbatch`-formatted dependency string such as "afterok:<job_id>". Note that multiple conditions can be provided; use "," to separate if you want ALL conditions to be fulfilled (ie, AND operator) or "?" if ANY condition can be fulfilled (ie, OR operator). Default is {}'.format(out_of_box_defaults['dependency']))
 
     groupB = ap.add_argument_group('DEFAULT CONFIG', "Start fresh with a new clusterize config file")
     groupB.add_argument('--gen-new-config-file', type=str, help="If you want to generate a template configuration file,\
                                                       you can do so here. Once you have modified it to your\
                                                       liking, edit the ~/.clusterize_pointer file so that it points to\
                                                       the path of your new configuration file.")
+    groupC = ap.add_argument_group('JOB CONTROL', "Options for managing job dependencies and scripting")
+    groupC.add_argument('--dependency', help='Prevent the job from starting until certain conditions are fulfilled. Accepts an `sbatch`-formatted dependency string such as "afterok:<job_id>". Note that multiple conditions can be provided; use "," to separate if you want ALL conditions to be fulfilled (ie, AND operator) or "?" if ANY condition can be fulfilled (ie, OR operator). Default is {}'.format(out_of_box_defaults['dependency']))
+    groupC.add_argument('--parsable', action='store_true', default=False,
+                    help='Output only the job ID, useful for scripting dependencies')
 
     args = ap.parse_args()
 

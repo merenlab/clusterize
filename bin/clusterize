@@ -68,6 +68,7 @@ class colored:
 
 class Clusterize(object):
     def __init__(self, args):
+        self.args = args
         self.job_seed = self.get_job_seed()
 
         self.config_file_path = open(pointer_file, 'r').readline().strip()
@@ -102,6 +103,8 @@ class Clusterize(object):
             'seed': self.job_seed,
             'parsable': args.__dict__.get('parsable', False),
         }
+
+        self.set_default_mail_type(args)
 
         if '/' in self.params['job_name']:
             print(colored.RED + 'Why does your job name have slashes? It\'s a name for the job, not a path' + colored.RESET)
@@ -169,6 +172,16 @@ class Clusterize(object):
                 self.params['error'] = '.'.join(split_by_dot)
             else:
                 self.params['error'] += '_' + self.params['seed']
+
+
+    def set_default_mail_type(self, args):
+        mail_user_provided = bool(args.__dict__.get('mail_user'))
+        mail_type_provided = args.__dict__.get('mail_type') is not None
+
+        if mail_user_provided and not mail_type_provided:
+            current_mail_type = (self.params.get('mail_type') or '').upper()
+            if current_mail_type in ['', 'NONE']:
+                self.params['mail_type'] = 'END'
 
 
     def add_to_job_history(self):
@@ -425,8 +438,8 @@ if __name__ == '__main__':
                                                               is {}'.format(out_of_box_defaults['mem_per_cpu']))
     groupA.add_argument('--nodelist', help='Run the job using a specific node, or multiple nodes (comma separated) if it is a multi-node job. Default is {}. See also --exclude'.format(out_of_box_defaults['nodelist']))
     groupA.add_argument('--exclude', help='Run the job making sure NOT to use these nodes (comma separated). Default is {}. See also --nodelist'.format(out_of_box_defaults['exclude']))
-    groupA.add_argument('--mail-user', help='email address to send updates to. Default is {}'.format(out_of_box_defaults['mail_user']))
-    groupA.add_argument('--mail-type', help='Comma-separated from this list: (NONE, BEGIN, END, FAIL, ALL). Default is {}'.format(out_of_box_defaults['mail_type']))
+    groupA.add_argument('--mail-user', help='email address to send updates to. Default is {}. If set without --mail-type, mail notifications default to END.'.format(out_of_box_defaults['mail_user']))
+    groupA.add_argument('--mail-type', help='Comma-separated from this list: (NONE, BEGIN, END, FAIL, ALL). Default is {} (or END when --mail-user is provided without --mail-type).'.format(out_of_box_defaults['mail_type']))
 
     groupB = ap.add_argument_group('DEFAULT CONFIG', "Start fresh with a new clusterize config file")
     groupB.add_argument('--gen-new-config-file', type=str, help="If you want to generate a template configuration file,\
@@ -444,4 +457,3 @@ if __name__ == '__main__':
         get_default_config(path=args.gen_new_config_file)
     else:
         main(args)
-
